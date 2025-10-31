@@ -1,3 +1,7 @@
+---
+tags: meta/repo
+---
+
 Available here:
 
 ```#meta/remote-library
