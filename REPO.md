@@ -1,16 +1,12 @@
 ---
 tags: meta/repo
 ---
+Some cool libraries I’ve written.
 
-Available here:
-
-```#meta/remote-library
-name: Repo/zefhemel
-url: https://raw.githubusercontent.com/zefhemel/silverbullet-libraries/refs/heads/main/REPO.md
+```#meta/library/remote
+name: zefhemel/Git
+uri: github:zefhemel/silverbullet-libraries@main/Git.md
 ---
-name: Git
-url: https://raw.githubusercontent.com/zefhemel/silverbullet-libraries/refs/heads/main/Git.md
----
-name: Ghost
-url: https://raw.githubusercontent.com/zefhemel/silverbullet-libraries/refs/heads/main/Ghost.md
+name: zefhemel/Ghost
+uri: github:zefhemel/silverbullet-libraries@main/Ghost.md
 ```
