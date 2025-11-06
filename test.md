@@ -1,8 +1,4 @@
----
----
----
 
----
 You want to **be** here, trust me: [[SilverBullet]]
 
 * [ ] This has a due date [dueDate: "2025-09-93"]
