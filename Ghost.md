@@ -1,8 +1,7 @@
 ---
 name: Library/zefhemel/Ghost
+tags: meta/library
 ---
-#meta/library
-
 Implements [[^Library/Std/Infrastructure/Export]] for [Ghost](https://ghost.org/). Currently only posts are supported.
 
 # Config example
