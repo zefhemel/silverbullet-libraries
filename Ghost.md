@@ -1,6 +1,9 @@
+---
+name: Library/zefhemel/Ghost
+---
 #meta/library
 
-Implements [[^Library/Std/Export]] for [Ghost](https://ghost.org/). Currently only posts are supported.
+Implements [[^Library/Std/Infrastructure/Export]] for [Ghost](https://ghost.org/). Currently only posts are supported.
 
 # Config example
 You need to create a Custom Integration key for this. Go to your Ghost admin panel > Advanced > Ingegrations > Custom > Add custom integration. Generate one, then copy the Admin API key and create a config somewhere in your SilverBullet space with `space-lua`:
