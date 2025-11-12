@@ -1,7 +1,7 @@
 ---
 tags: meta/repository
 ---
-Some cool libraries I’ve written, enjoy!
+Some libraries I’ve written, enjoy!
 
 ```#meta/library/remote
 name: zefhemel/Git
