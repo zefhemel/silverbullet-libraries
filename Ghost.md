@@ -2,23 +2,21 @@
 name: Library/zefhemel/Ghost
 tags: meta/library
 ---
-Implements [[^Library/Std/Infrastructure/Export]] for [Ghost](https://ghost.org/). Currently only posts are supported.
+Implements basic [[^Library/Std/Infrastructure/Share]] for [Ghost](https://ghost.org/). Currently only posts are supported.
 
 # Config example
-You need to create a Custom Integration key for this. Go to your Ghost admin panel > Advanced > Ingegrations > Custom > Add custom integration. Generate one, then copy the Admin API key and create a config somewhere in your SilverBullet space with `space-lua`:
+You need to create a Custom Integration key for this. Go to your Ghost admin panel > Advanced > Ingegrations > Custom > Add custom integration. Generate one, then copy the Admin API key and add a config somewhere in your SilverBullet space (e.g. in your [[CONFIG]] page) with `space-lua`:
 ```lua
-config.set {
-  ghost = {
-    blog = {
-      url = "https://xxx.ghost.io",
-      key = "xxx"
-    }
+config.set("ghost", {
+  blog = {
+    url = "https://xxx.ghost.io",
+    key = "xxx"
   }
-}
+})
 ```
 
 # Publishing a post
-You can now publish any page as a Ghost post using the `Export: Page or Selection` (Cmd-e/Ctrl-e) command. The only thing you need to do is set a `slug` key in your front matter (this slug will later also be used to determine if a post needs to be updated or created).
+You can now publish any page as a Ghost post with the `Share: Page` command. You will be guided through the steps when you select the “Ghost post” option.
 
 # Implementation
 Sadly, the JavaScript Ghost Admin library doesn’t seem to work in the browser, therefore we have to fall back to custom implemented API calls.
@@ -57,7 +55,7 @@ end
 -- Authenticated admin Ghost request
 local function authenticatedRequest(cfg, path, method, body)
   local token = genToken(cfg.key)
-  return http.request(cfg.url .. path, {
+  return net.proxyFetch(cfg.url .. path, {
     method = method,
     headers = {
       Authorization = "Ghost " .. token,
@@ -89,51 +87,87 @@ local function markdownToLexical(text)
   }
 end
 
--- Export discovery
-event.listen {
-  name = "export:discover",
-  run = function(event)
-    local publishers = {}
-    for name, cfg in pairs(config.get("ghost")) do
-      -- We're going to offer one option per site
-      table.insert(publishers, {
-        -- encoding the site id in the event name
-        id = "ghost-post::"..name,
-        name = "Ghost: " .. name .. ": Post"
-      })
+service.define {
+  selector = "share:onboard",
+  match = {
+    name = "Ghost post",
+    descripion = "Publish this page as a post on the Ghost CMS"
+  },
+  run = function(data)
+    local ghostConfig = config.get("ghost")
+    if not ghostConfig then
+      editor.flashNotification("No Ghost blogs configured", "error")
+      return
     end
-    if #publishers > 0 then
-      return publishers
+    local availableBlogs = table.keys(ghostConfig)
+    if #availableBlogs == 0 then
+      editor.flashNotification("No Ghost blogs configured", "error")
+      return
     end
+    -- Prompt (if required) for the blog to publish to
+    local cfgName, cfg
+    if #availableBlogs > 1 then
+      local options = {}
+      for cfgName, cfg in pairs(ghostConfig) do
+        table.insert(options, {
+          name = cfgName,
+          cfg = cfg
+        })
+      end
+      local cfg = editor.filterBox("Ghost blog to publish to", options, "Select the Ghost blog of your desire")
+      if not cfg then
+        return
+      end
+      cfgName = cfg.name
+      cfg = cfg.cfg
+    else
+      cfgName = availableBlogs[1]
+      cfg = ghostConfig[cfgName]
+    end
+    -- Now ask for a sluge
+    local slug = editor.prompt("Post slug:", "my-new-post")
+    if not slug then
+      return
+    end
+    -- Write an initial version using writeURI
+    local uri = "ghost:" .. cfgName .. ":" .. slug
+    local text = editor.getText()
+    net.writeURI(uri, text)
+    return {
+      uri = uri,
+      hash = share.contentHash(text),
+      mode = "push"
+    }
   end
 }
 
-event.listen {
-  name = "export:run:ghost-post::*",
-  run = function(event)
-    -- Extract Ghost config
-    local cfgName = event.name:split("::")[2]
+-- URIs scheme support
+--   ghost:blog-name:slug
+service.define {
+  selector = "net.writeURI:ghost:*",
+  match = {priority = 10},
+  run = function(data)
+    local uri = data.uri
+    local text = data.content
+    local _, cfgName, slug = table.unpack(uri:split(":"))
+    if not cfgName or not slug then
+      error("Invalid ghost URI: expected format is ghost:blog-name:slug")
+    end
     local cfg = config.get("ghost")[cfgName]
     if not cfg then
-      error("Could not find config")
+      error("Could not find config: " .. cfgName)
     end
-    -- Parse frontmatter: 'title' (optional) and 'slug'
+    -- Note: we need the page name, which cannot be extracted from this API call so need to assume it's triggered right from the page
     local pageName = editor.getCurrentPage()
     local pageNameBits = pageName:split("/")
+    -- Last bit is assumed to be the title
     local title = pageNameBits[#pageNameBits]
-    local text = editor.getText()
     local fm = index.extractFrontmatter(text, {
       removeFrontMatterSection=true
     })
     local frontmatter = fm.frontmatter
     text = fm.text
     title = title or frontmatter.title
-    local id = frontmatter.id
-    local slug = frontmatter.slug
-    if not slug then
-      editor.flashNotification("Please set the 'slug' key in your frontmatter", "error")
-      return
-    end
     -- Let's check if this posts was already created
     local r = authenticatedRequest(cfg, "/ghost/api/admin/posts/slug/" .. slug .. "/", "GET")
     if r.status == 404 then
@@ -164,9 +198,7 @@ event.listen {
           updated_at = updatedAt
         }}
       })
-      if r.ok then
-        editor.flashNotification "Updated post successfully"
-      else
+      if not r.ok then
         editor.flashNotification("Failed to update post, check logs", "error")
         js.log("Error", r)
       end
