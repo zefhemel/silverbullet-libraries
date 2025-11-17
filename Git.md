@@ -2,7 +2,7 @@
 name: Library/zefhemel/Git
 tags: meta/library
 ---
-This library adds a basic git synchronization functionality to SilverBullet. It should be considered a successor to [silverbullet-git](https://github.com/silverbulletmd/silverbullet-git) implemented in Space Lua. 
+This library adds a basic git synchronization functionality to SilverBullet. It should be considered a successor to [silverbullet-git](https://github.com/silverbulletmd/silverbullet-git) implemented in Space Lua.
 
 The following commands are implemented:
 
