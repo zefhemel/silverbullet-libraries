@@ -4,13 +4,15 @@ tags: meta/repository
 Some libraries I’ve written, enjoy!
 
 ```#meta/library/remote
-name: zefhemel/Git
+name: Git
+author: Zef Hemel
 description: Basic Git integration
 website: https://git-scm.com/
-uri: github:zefhemel/silverbullet-libraries/Git.md
+uri: https://github.com/zefhemel/silverbullet-libraries/blob/main/Git.md
 ---
-name: zefhemel/Ghost
+name: Ghost
+author: Zef Hemel
 description: Basic Ghost CMS integration
 website: https://ghost.org/
-uri: github:zefhemel/silverbullet-libraries/Ghost.md
+uri: https://github.com/zefhemel/silverbullet-libraries/blob/main/Ghost.md
 ```
