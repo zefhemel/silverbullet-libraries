@@ -4,7 +4,7 @@ tags: meta/library
 ---
 This library adds a basic git synchronization functionality to SilverBullet. It should be considered a successor to [silverbullet-git](https://github.com/silverbulletmd/silverbullet-git) implemented in Space Lua.
 
-The following commands are implemented:
+The following commands are currently implemented:
 
 ${widgets.commandButton("Git: Sync")}
 
@@ -44,12 +44,19 @@ config.define("git", {
 ```space-lua
 git = {}
 
+function checkedShellRun(cmd, args)
+  local r = shell.run(cmd, args)
+  if r.code != 0 then
+    error("Error: " .. r.stdout .. r.stderr, "error")
+  end
+end
+
 function git.commit(message)
   message = message or "Snapshot"
   print "Comitting..."
   local ok, message = pcall(function()
-    shell.run("git", {"add", "./*"})
-    shell.run("git", {"commit", "-a", "-m", message})
+    checkedShellRun("git", {"add", "./*"})
+    checkedShellRun("git", {"commit", "-a", "-m", message})
   end)
   if not ok then
     print("Git commit failed: " .. message)
@@ -59,9 +66,9 @@ end
 function git.sync()
   git.commit()
   print "Pulling..."
-  shell.run("git", {"pull"})
+  checkedShellRun("git", {"pull"})
   print "Pushing..."
-  shell.run("git", {"push"})
+  checkedShellRun("git", {"push"})
 end
 
 command.define {
