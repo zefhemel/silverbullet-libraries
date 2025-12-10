@@ -2,22 +2,20 @@
 name: Library/zefhemel/WriteFreely
 tags: meta/library
 ---
-Implements basic [[^Library/Std/Infrastructure/Share]] for [WriteFreely](https://writefreely.org).
+Implements basic [[^Library/Std/Infrastructure/Share]] for [WriteFreely](https://writefreely.org) ([API docs](https://developers.write.as/docs/api/)).
 
 # Config example
 Configure, e.g. in your [[CONFIG]]:
 ```lua
 config.set("writefreely", {
   blog = {
-    url = "https://write.as",
+    url = "https://write.as", -- or whever your blog is published
     username = "youruser",
     password = "yourpassword",
     collection = "youruser" -- usually this is your user name
   }
 })
 ```
-
-https://developers.write.as/docs/api/#posts
 
 # API implementation
 ```space-lua
