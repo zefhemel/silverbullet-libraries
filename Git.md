@@ -52,8 +52,8 @@ function checkedShellRun(cmd, args)
 end
 
 function git.localChanges()
-  local r = shell.run("git", {"diff", "--exit-code"})
-  return r.code != 0
+  local r = shell.run("git", {"status", "--porcelain"})
+  return r.stdout != ""
 end
 
 function git.commit(message)
