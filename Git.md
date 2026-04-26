@@ -74,10 +74,13 @@ end
 
 function git.sync()
   git.commit()
-  print "Pulling..."
-  checkedShellRun("git", {"pull"})
-  print "Pushing..."
-  checkedShellRun("git", {"push"})
+  local r = shell.run("git", {"remote"})
+  if r.stdout != "" then
+    print "Pulling..."
+    checkedShellRun("git", {"pull"})
+    print "Pushing..."
+    checkedShellRun("git", {"push"})
+  end
 end
 
 command.define {
