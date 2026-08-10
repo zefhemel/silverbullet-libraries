@@ -52,23 +52,27 @@ function checkedShellRun(cmd, args)
 end
 
 function git.localChanges()
-  local r = shell.run("git", {"diff", "--exit-code"})
+  local r = shell.run("git", {"diff", "--cached", "--exit-code"})
   return r.code != 0
 end
 
 function git.commit(message)
   message = message or "Snapshot"
+  checkedShellRun("git", {"add", "."})
   if git.localChanges() then
-    print "Comitting changes..."
+    print "Committing changes..."
     local ok, message = pcall(function()
-      checkedShellRun("git", {"add", "./*"})
-      checkedShellRun("git", {"commit", "-a", "-m", message})
+      checkedShellRun("git", {"commit", "-m", message})
     end)
     if not ok then
       print("Git commit failed: " .. message)
+      editor.flashNotification("Git commit failed", "error")
+    else
+      editor.flashNotification "Committed!"
     end
   else
     print "No local changes to commit"
+    editor.flashNotification "No local changes to commit"
   end
 end
 
