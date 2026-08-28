@@ -6,6 +6,11 @@ This library adds a basic git synchronization functionality to SilverBullet. It 
 
 The following commands are currently implemented:
 
+${widgets.commandButton("Git: Status")}
+
+- Shows `git status` in a side panel with close button
+- Refresh `git status`
+
 ${widgets.commandButton("Git: Sync")}
 
 * Adds all files in your folder to git
@@ -56,6 +61,50 @@ function git.localChanges()
   return r.code != 0
 end
 
+-- Check the state of statusPanel
+git.statusPanelOpen = git.statusPanelOpen or false
+
+function git.status()
+    local result = shell.run("git", {"status"})
+    if result.code ~= 0 then
+        editor.flashNotification("Git status error: " .. result.stderr, "error")
+        return
+    end
+
+    git.statusPanelOpen = true
+
+    local refreshBtn = dom.button {
+        title = "Refresh",
+        onclick = function() git.status() end,
+        "↻"
+    }
+    local closeBtn = dom.button {
+        title = "Close",
+        onclick = function()
+            editor.hidePanel("rhs")
+            git.statusPanelOpen = false
+        end,
+        "✕"
+    }
+    local scrollArea = dom.div {
+        style = "height: calc(100vh - 3rem); overflow-y: auto;",
+        dom.pre { result.stdout }
+    }
+    local content = dom.div {
+        style = "height: 100%; display: flex; flex-direction: column;",
+        dom.div { style = "display: flex; justify-content: flex-end; gap: 0.3rem;", refreshBtn, closeBtn },
+        scrollArea
+    }
+
+    editor.showPanel("rhs", 0.3, content)
+end
+
+function git.refreshStatusIfOpen()
+    if git.statusPanelOpen then
+        git.status()
+    end
+end
+
 function git.commit(message)
   message = message or "Snapshot"
   if git.localChanges() then
@@ -70,6 +119,7 @@ function git.commit(message)
   else
     print "No local changes to commit"
   end
+  git.refreshStatusIfOpen()
 end
 
 function git.sync()
@@ -78,6 +128,7 @@ function git.sync()
   checkedShellRun("git", {"pull"})
   print "Pushing..."
   checkedShellRun("git", {"push"})
+  git.refreshStatusIfOpen()
 end
 
 command.define {
@@ -86,6 +137,11 @@ command.define {
     local message = editor.prompt "Commit message:"
     git.commit(message)
   end
+}
+
+command.define {
+    name = "Git: Status",
+    run = git.status
 }
 
 command.define {
