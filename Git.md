@@ -47,29 +47,26 @@ git = {}
 function checkedShellRun(cmd, args)
   local r = shell.run(cmd, args)
   if r.code != 0 then
-    error("Error: " .. r.stdout .. r.stderr, "error")
+    error("Error: " .. r.stdout .. r.stderr)
   end
+  return r
 end
 
 function git.localChanges()
-  local r = shell.run("git", {"diff", "--exit-code"})
-  return r.code != 0
+  local r = checkedShellRun("git", {"status", "--porcelain=v1", "--untracked-files=all"})
+  return r.stdout != ""
 end
 
 function git.commit(message)
   message = message or "Snapshot"
-  if git.localChanges() then
-    print "Comitting changes..."
-    local ok, message = pcall(function()
-      checkedShellRun("git", {"add", "./*"})
-      checkedShellRun("git", {"commit", "-a", "-m", message})
-    end)
-    if not ok then
-      print("Git commit failed: " .. message)
-    end
-  else
+  if not git.localChanges() then
     print "No local changes to commit"
+    return false
   end
+  print "Committing changes..."
+  checkedShellRun("git", {"add", "-A", "--", "."})
+  checkedShellRun("git", {"commit", "-m", message})
+  return true
 end
 
 function git.sync()
@@ -84,15 +81,31 @@ command.define {
   name = "Git: Commit",
   run = function()
     local message = editor.prompt "Commit message:"
-    git.commit(message)
+    if message == nil then
+      return
+    end
+    local ok, committed = pcall(function()
+      return git.commit(message)
+    end)
+    if not ok then
+      editor.flashNotification("Git commit failed: " .. tostring(committed), "error")
+    elseif committed then
+      editor.flashNotification "Committed locally (not pushed)"
+    else
+      editor.flashNotification "No local changes to commit"
+    end
   end
 }
 
 command.define {
   name = "Git: Sync",
   run = function()
-    git.sync()
-    editor.flashNotification "Done!"
+    local ok, err = pcall(git.sync)
+    if ok then
+      editor.flashNotification "Done!"
+    else
+      editor.flashNotification("Git sync failed: " .. tostring(err), "error")
+    end
   end
 }
 
